@@ -2,14 +2,22 @@ GREEN			= \033[0;32m
 YELLOW			= \033[0;33m
 RESET			= \033[0m
 
-USER_NAME		= $(shell id -un)
-ifeq ($(USER_NAME), root)
-	USER_NAME = placeholder_user_name
+USER_NAME		:= $(shell id -un)
+ifeq ($(USER_NAME),root)
+USER_NAME		:= placeholder_user_name
 endif
-DATA_DIR		= /home/$(USER_NAME)/data
-NAME			= inception
-SRC_DIR			= srcs/
-RM				= rm -rf
+
+DATA_DIR		:= /home/$(USER_NAME)/data
+NAME			:= inception
+SRC_DIR			:= srcs/
+RM				:= rm -rf
+
+COMPOSE_FILE	:= srcs/docker-compose.yml
+COMPOSE			:= docker compose -f $(COMPOSE_FILE) --project-directory srcs
+
+WP_VOLUME		:= $(DATA_DIR)/wordpress
+DB_VOLUME		:= $(DATA_DIR)/mariadb
+DOMAIN_NAME		:= $(USER_NAME).42.fr
 
 all: $(NAME)
 
@@ -19,8 +27,8 @@ $(NAME): $(SRC_DIR)
 		echo "$(YELLOW)Secrets initialized. Please fill them before running the project.$(RESET)"; \
 	fi
 	@echo "$(YELLOW)Creating data directories...$(RESET)"
-	@mkdir -p $(DATA_DIR)/wordpress
-	@mkdir -p $(DATA_DIR)/mariadb
+	@mkdir -p $(WP_VOLUME)
+	@mkdir -p $(DB_VOLUME)
 	@echo "$(GREEN)Data directories created$(RESET)"
 	@echo "$(GREEN)Inception project created$(RESET)"
 
@@ -33,6 +41,18 @@ init-secrets:
 	@cp secrets/db_root_password.txt.example secrets/db_root_password.txt
 	@cp secrets/credentials.txt.example secrets/credentials.txt
 	@echo "$(GREEN)Secrets initialized$(RESET)"
+
+up:
+	@echo "$(YELLOW)Starting the project...$(RESET)"
+	@export WP_VOLUME="$(WP_VOLUME)" && \
+		export DB_VOLUME="$(DB_VOLUME)" && \
+		export DOMAIN_NAME="$(DOMAIN_NAME)" && \
+		export USER_NAME="$(USER_NAME)" && \
+		$(COMPOSE) up -d --build
+	@echo "$(GREEN)Project started$(RESET)"
+
+show-status:
+	@docker ps -a
 
 clean:
 	@echo "$(YELLOW)Cleaning up...$(RESET)"
