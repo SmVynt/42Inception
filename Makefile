@@ -1,6 +1,6 @@
-GREEN			= \033[0;32m
-YELLOW			= \033[0;33m
-RESET			= \033[0m
+CLR_G			:= \033[0;32m
+CLR_Y			:= \033[0;33m
+CLR_RESET		:= \033[0m
 
 USER_NAME		:= $(shell id -un)
 ifeq ($(USER_NAME),root)
@@ -8,9 +8,15 @@ USER_NAME		:= placeholder_user_name
 endif
 
 DATA_DIR		:= /home/$(USER_NAME)/data
-NAME			:= inception
 SRC_DIR			:= srcs/
 RM				:= rm -rf
+
+SECRET_DIR		:= secrets/
+SECRETS 		:= \
+				$(SECRET_DIR)db_password.txt \
+				$(SECRET_DIR)db_root_password.txt \
+				$(SECRET_DIR)wp_password.txt \
+				$(SECRET_DIR)wp_author_password.txt
 
 COMPOSE_FILE	:= srcs/docker-compose.yml
 COMPOSE			:= docker compose -f $(COMPOSE_FILE) --project-directory srcs
@@ -19,86 +25,88 @@ WP_VOLUME		:= $(DATA_DIR)/wordpress
 DB_VOLUME		:= $(DATA_DIR)/mariadb
 DOMAIN_NAME		:= $(USER_NAME).42.fr
 
+export WP_VOLUME
+export DB_VOLUME
+export DOMAIN_NAME
+
+NAME			:= inception
+
 all: $(NAME)
 
 $(NAME): $(SRC_DIR)
 	@if [ ! -f srcs/.env ]; then \
 		$(MAKE) init-secrets; \
-		echo "$(YELLOW)Secrets initialized. Please fill them before running the project.$(RESET)"; \
+		echo "$(CLR_Y)Secrets scaffold created. Fill secrets before relying on defaults.$(CLR_RESET)"; \
 	fi
-	@echo "$(YELLOW)Creating data directories...$(RESET)"
-	@mkdir -p $(WP_VOLUME)
-	@mkdir -p $(DB_VOLUME)
-	@echo "$(GREEN)Data directories created$(RESET)"
-	@echo "$(GREEN)Inception project created$(RESET)"
+	@mkdir -p $(WP_VOLUME) $(DB_VOLUME)
+	@echo "$(CLR_G)Data dirs ready: $(WP_VOLUME), $(DB_VOLUME)$(CLR_RESET)"
 
 init-secrets:
-	@echo "$(YELLOW)Initializing secrets...$(RESET)"
+	@echo "$(CLR_Y)Initializing secrets...$(CLR_RESET)"
 	@mkdir -p secrets
-	@cp srcs/.env.example srcs/.env
+	@[ -f srcs/.env ] || cp srcs/.env.example srcs/.env
 	@chmod 600 srcs/.env
-	@cp secrets/db_password.txt.example secrets/db_password.txt
-	@cp secrets/db_root_password.txt.example secrets/db_root_password.txt
-	@cp secrets/wp_password.txt.example secrets/wp_password.txt
-	@cp secrets/wp_author_password.txt.example secrets/wp_author_password.txt
-	@echo "$(GREEN)Secrets initialized$(RESET)"
+	@[ -f secrets/db_password.txt ] || cp secrets/db_password.txt.example secrets/db_password.txt
+	@[ -f secrets/db_root_password.txt ] || cp secrets/db_root_password.txt.example secrets/db_root_password.txt
+	@[ -f secrets/wp_password.txt ] || cp secrets/wp_password.txt.example secrets/wp_password.txt
+	@[ -f secrets/wp_author_password.txt ] || cp secrets/wp_author_password.txt.example secrets/wp_author_password.txt
+	@echo "$(CLR_G)Secrets initialized$(CLR_RESET)"
+
+build: $(NAME)
+	@echo "$(CLR_Y)Building images...$(CLR_RESET)"
+	@$(COMPOSE) build
+	@echo "$(CLR_G)Build finished$(CLR_RESET)"
 
 up: $(NAME)
-	@echo "$(YELLOW)Starting the project...$(RESET)"
-	@export WP_VOLUME="$(WP_VOLUME)" && \
-		export DB_VOLUME="$(DB_VOLUME)" && \
-		export DOMAIN_NAME="$(DOMAIN_NAME)" && \
-		export USER_NAME="$(USER_NAME)" && \
-		$(COMPOSE) up -d --build
-	@echo "$(GREEN)Project started$(RESET)"
-	@echo "$(YELLOW)Project is available at https://$(DOMAIN_NAME)$(RESET)"
-	@echo "$(YELLOW)VM IP: $(shell ip -4 addr show docker0 | grep -oP 'inet \K[\d.]+')$(RESET)"
+	@echo "$(CLR_Y)Starting stack...$(CLR_RESET)"
+	@$(COMPOSE) up -d --build
+	@echo "$(CLR_G)Up: https://$(DOMAIN_NAME)$(CLR_RESET)"
 
 rebuild: $(NAME)
-	@echo "$(YELLOW)Rebuilding from scratch (no cache)...$(RESET)"
-	@export WP_VOLUME="$(WP_VOLUME)" && \
-		export DB_VOLUME="$(DB_VOLUME)" && \
-		export DOMAIN_NAME="$(DOMAIN_NAME)" && \
-		export USER_NAME="$(USER_NAME)" && \
-		$(COMPOSE) build --no-cache && \
-		$(COMPOSE) up -d
-	@echo "$(GREEN)Project rebuilt and started$(RESET)"
-	@echo "$(YELLOW)Project is available at https://$(DOMAIN_NAME)$(RESET)"
+	@echo "$(CLR_Y)Rebuilding from scratch...$(CLR_RESET)"
+	@$(COMPOSE) build --no-cache
+	@$(COMPOSE) up -d
+	@echo "$(CLR_G)Rebuilt and up: https://$(DOMAIN_NAME)$(CLR_RESET)"
 
 down:
-	@echo "$(YELLOW)Stopping the project...$(RESET)"
-	@export WP_VOLUME="$(WP_VOLUME)" && \
-		export DB_VOLUME="$(DB_VOLUME)" && \
-		export DOMAIN_NAME="$(DOMAIN_NAME)" && \
-		export USER_NAME="$(USER_NAME)" && \
-		$(COMPOSE) down
-	@echo "$(GREEN)Project stopped$(RESET)"
+	@echo "$(CLR_Y)Stopping stack...$(CLR_RESET)"
+	@$(COMPOSE) down
+	@echo "$(CLR_G)Stopped$(CLR_RESET)"
 
-show-status:
+logs:
+	@$(COMPOSE) logs -f
+
+ps:
 	@docker ps -a
 
 clean:
-	@echo "$(YELLOW)Cleaning up...$(RESET)"
-	@export WP_VOLUME="$(WP_VOLUME)" && \
-		export DB_VOLUME="$(DB_VOLUME)" && \
-		export DOMAIN_NAME="$(DOMAIN_NAME)" && \
-		export USER_NAME="$(USER_NAME)" && \
-		$(COMPOSE) down -v 2>/dev/null || true
-	@sudo $(RM) $(DATA_DIR)/wordpress
-	@sudo $(RM) $(DATA_DIR)/mariadb
-	@echo "$(GREEN)Data directories removed$(RESET)"
+	@echo "$(CLR_Y)Stopping the Project and removing project volumes...$(CLR_RESET)"
+	@$(COMPOSE) down -v 2>/dev/null || true
+	@sudo $(RM) $(WP_VOLUME) $(DB_VOLUME)
+	@echo "$(CLR_G)Project data removed$(CLR_RESET)"
 
 fclean: clean
-	@echo "$(YELLOW)This will remove all the secrets and the environment file.$(RESET)"
-	@read -p "Are you sure you want to continue? (y/n) " confirm; \
+	@echo "$(CLR_Y)Remove the secrets and the .env file? (y/n)$(CLR_RESET)"
+	@read -r confirm; \
 	if [ "$$confirm" = "y" ]; then \
-		$(RM) secrets/db_password.txt; \
-		$(RM) secrets/db_root_password.txt; \
-		$(RM) secrets/wp_password.txt; \
-		$(RM) secrets/wp_author_password.txt; \
-		echo "$(GREEN)Secrets removed$(RESET)"; \
+		$(RM) $(SECRETS); \
 		$(RM) srcs/.env; \
-		echo "$(GREEN)Environment file removed$(RESET)"; \
+		echo "$(CLR_G)Secrets and .env removed$(CLR_RESET)"; \
 	else \
-		echo "$(YELLOW)Aborting...$(RESET)"; \
+		echo "$(CLR_Y)Aborted$(CLR_RESET)"; \
 	fi
+
+help:
+	@echo "$(CLR_Y)Inception — Docker Compose$(CLR_RESET)"
+	@echo "  make $(NAME)      Create data dirs, ensure .env / secrets are created"
+	@echo "  make up           Build (if needed) and run Compose (detached)"
+	@echo "  make down         Stop Compose"
+	@echo "  make build        docker compose build"
+	@echo "  make rebuild      build --no-cache && up -d"
+	@echo "  make logs         Follow container logs"
+	@echo "  make ps           docker ps -a"
+	@echo "  make clean        compose down -v + remove host data dirs"
+	@echo "  make fclean       clean + remove secrets and srcs/.env"
+	@echo "  make init-secrets Copy .env.example and secrets/*.example"
+
+.PHONY: all help $(NAME) init-secrets build up rebuild down logs ps clean fclean
