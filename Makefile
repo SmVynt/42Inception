@@ -39,7 +39,7 @@ init-secrets:
 	@chmod 600 srcs/.env
 	@cp secrets/db_password.txt.example secrets/db_password.txt
 	@cp secrets/db_root_password.txt.example secrets/db_root_password.txt
-	@cp secrets/credentials.txt.example secrets/credentials.txt
+	@cp secrets/wp_password.txt.example secrets/wp_password.txt
 	@echo "$(GREEN)Secrets initialized$(RESET)"
 
 up:
@@ -66,7 +66,7 @@ fclean: clean
 	if [ "$$confirm" = "y" ]; then \
 		$(RM) secrets/db_password.txt; \
 		$(RM) secrets/db_root_password.txt; \
-		$(RM) secrets/credentials.txt; \
+		$(RM) secrets/wp_password.txt; \
 		echo "$(GREEN)Secrets removed$(RESET)"; \
 		$(RM) srcs/.env; \
 		echo "$(GREEN)Environment file removed$(RESET)"; \
