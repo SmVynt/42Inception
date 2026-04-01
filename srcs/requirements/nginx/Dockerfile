@@ -17,4 +17,6 @@ COPY ./tools/setup_nginx.sh /setup_nginx.sh
 
 RUN chmod +x /setup_nginx.sh
 
+EXPOSE ${NGINX_PORT:-443}
+
 ENTRYPOINT ["/setup_nginx.sh"]

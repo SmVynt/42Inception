@@ -16,5 +16,7 @@ COPY conf/www.conf /etc/php/8.2/fpm/pool.d/www.conf
 COPY tools/setup_wordpress.sh /setup_wordpress.sh
 RUN chmod +x /setup_wordpress.sh
 
+EXPOSE ${WORDPRESS_PORT:-9000}
+
 WORKDIR /var/www/html
 ENTRYPOINT ["/setup_wordpress.sh"]

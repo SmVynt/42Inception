@@ -39,6 +39,8 @@ services:
       - .env
     depends_on:
       - wordpress
+    volumes:
+      - wordpress_data:/var/www/html:ro
     networks:
       - inception-network
     restart: always

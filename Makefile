@@ -43,7 +43,7 @@ init-secrets:
 	@cp secrets/wp_author_password.txt.example secrets/wp_author_password.txt
 	@echo "$(GREEN)Secrets initialized$(RESET)"
 
-up:
+up: $(NAME)
 	@echo "$(YELLOW)Starting the project...$(RESET)"
 	@export WP_VOLUME="$(WP_VOLUME)" && \
 		export DB_VOLUME="$(DB_VOLUME)" && \
@@ -68,6 +68,11 @@ show-status:
 
 clean:
 	@echo "$(YELLOW)Cleaning up...$(RESET)"
+	@export WP_VOLUME="$(WP_VOLUME)" && \
+		export DB_VOLUME="$(DB_VOLUME)" && \
+		export DOMAIN_NAME="$(DOMAIN_NAME)" && \
+		export USER_NAME="$(USER_NAME)" && \
+		$(COMPOSE) down -v 2>/dev/null || true
 	@$(RM) $(DATA_DIR)/wordpress
 	@$(RM) $(DATA_DIR)/mariadb
 	@echo "$(GREEN)Data directories removed$(RESET)"
@@ -79,6 +84,7 @@ fclean: clean
 		$(RM) secrets/db_password.txt; \
 		$(RM) secrets/db_root_password.txt; \
 		$(RM) secrets/wp_password.txt; \
+		$(RM) secrets/wp_author_password.txt; \
 		echo "$(GREEN)Secrets removed$(RESET)"; \
 		$(RM) srcs/.env; \
 		echo "$(GREEN)Environment file removed$(RESET)"; \

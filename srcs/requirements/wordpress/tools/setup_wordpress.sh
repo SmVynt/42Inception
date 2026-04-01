@@ -30,6 +30,7 @@ var_exists() {
 var_exists WORDPRESS_DB_PASSWORD "Mount secret db_password."
 var_exists WP_ADMIN_PASSWORD     "Mount secret wp_password."
 var_exists WP_AUTHOR_PASSWORD    "Mount secret wp_author_password."
+var_exists WORDPRESS_DB_HOST     "Set in compose environment."
 var_exists WORDPRESS_DB_NAME     "Set in .env or compose environment."
 var_exists WORDPRESS_DB_USER     "Set in .env or compose environment."
 var_exists DOMAIN_NAME           "Set in .env or Makefile exports."
@@ -40,7 +41,7 @@ var_exists WP_USER               "Set in .env (second WP user)."
 var_exists WP_USER_EMAIL         "Set in .env (second WP user email)."
 
 # Wait until MariaDB accepts connections (TCP + credentials)
-while ! mysqladmin ping -h mariadb -P "${MARIA_PORT}" \
+while ! mysqladmin ping -h "${WORDPRESS_DB_HOST}" -P "${MARIA_PORT}" \
 	-u "${WORDPRESS_DB_USER}" -p"${WORDPRESS_DB_PASSWORD}" --silent 2>/dev/null; do
 	echo "${CLR_Y}Waiting for MariaDB...${CLR_RESET}"
 	sleep 1
@@ -55,8 +56,7 @@ if ! wp core is-installed --allow-root 2>/dev/null; then
 		--dbname="${WORDPRESS_DB_NAME}" \
 		--dbuser="${WORDPRESS_DB_USER}" \
 		--dbpass="${WORDPRESS_DB_PASSWORD}" \
-		--dbhost="mariadb" \
-		--dbport="${MARIA_PORT}" \
+		--dbhost="${WORDPRESS_DB_HOST}:${MARIA_PORT}" \
 		--skip-check \
 		--force
 

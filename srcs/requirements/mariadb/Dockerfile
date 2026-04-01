@@ -12,4 +12,6 @@ COPY ./tools/setup_maria.sh /setup_maria.sh
 
 RUN chmod +x /setup_maria.sh
 
+EXPOSE ${MARIA_PORT:-3306}
+
 ENTRYPOINT ["/setup_maria.sh"]

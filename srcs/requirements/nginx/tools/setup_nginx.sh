@@ -1,4 +1,5 @@
 #!/bin/sh
+set -eu
 
 CLR_R="\033[31m"
 CLR_G="\033[32m"
