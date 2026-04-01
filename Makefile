@@ -40,6 +40,7 @@ init-secrets:
 	@cp secrets/db_password.txt.example secrets/db_password.txt
 	@cp secrets/db_root_password.txt.example secrets/db_root_password.txt
 	@cp secrets/wp_password.txt.example secrets/wp_password.txt
+	@cp secrets/wp_author_password.txt.example secrets/wp_author_password.txt
 	@echo "$(GREEN)Secrets initialized$(RESET)"
 
 up:
@@ -50,6 +51,8 @@ up:
 		export USER_NAME="$(USER_NAME)" && \
 		$(COMPOSE) up -d --build
 	@echo "$(GREEN)Project started$(RESET)"
+	@echo "$(YELLOW)Project is available at https://$(DOMAIN_NAME)$(RESET)"
+	@echo "$(YELLOW)VM IP: $(shell ip -4 addr show docker0 | grep -oP 'inet \K[\d.]+')$(RESET)"
 
 down:
 	@echo "$(YELLOW)Stopping the project...$(RESET)"
