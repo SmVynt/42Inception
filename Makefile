@@ -54,6 +54,17 @@ up: $(NAME)
 	@echo "$(YELLOW)Project is available at https://$(DOMAIN_NAME)$(RESET)"
 	@echo "$(YELLOW)VM IP: $(shell ip -4 addr show docker0 | grep -oP 'inet \K[\d.]+')$(RESET)"
 
+rebuild: $(NAME)
+	@echo "$(YELLOW)Rebuilding from scratch (no cache)...$(RESET)"
+	@export WP_VOLUME="$(WP_VOLUME)" && \
+		export DB_VOLUME="$(DB_VOLUME)" && \
+		export DOMAIN_NAME="$(DOMAIN_NAME)" && \
+		export USER_NAME="$(USER_NAME)" && \
+		$(COMPOSE) build --no-cache && \
+		$(COMPOSE) up -d
+	@echo "$(GREEN)Project rebuilt and started$(RESET)"
+	@echo "$(YELLOW)Project is available at https://$(DOMAIN_NAME)$(RESET)"
+
 down:
 	@echo "$(YELLOW)Stopping the project...$(RESET)"
 	@export WP_VOLUME="$(WP_VOLUME)" && \

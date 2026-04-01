@@ -21,10 +21,11 @@ if [ -r /run/secrets/wp_author_password ]; then
 fi
 
 var_exists() {
-	# val becomes the value of the variable $1, or an empty string if the variable is not set
 	eval val="\${$1:-}"
-	# if val is empty, print error and exit
-	[ -z "$val" ] && echo "${CLR_R}Error: $1 is not set. $2${CLR_RESET}" >&2 && exit 1
+	if [ -z "$val" ]; then
+		echo "${CLR_R}Error: $1 is not set. $2${CLR_RESET}" >&2
+		exit 1
+	fi
 }
 
 var_exists WORDPRESS_DB_PASSWORD "Mount secret db_password."
