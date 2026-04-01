@@ -29,23 +29,56 @@ var_exists MARIA_PASSWORD       "Mount secret db_password."
 
 DATADIR=/var/lib/mysql
 SOCKET=/run/mysqld/mysqld.sock
+INIT_MARK="$DATADIR/.inception_init_done"
 
 mkdir -p /run/mysqld
 chown mysql:mysql /run/mysqld
 
-# First setup only if $DATADIR/mysql does not exist
-if [ ! -d "$DATADIR/mysql" ]; then
-    # Initialize database
-    echo "${CLR_Y}Initializing database...${CLR_RESET}"
-	mariadb-install-db --user=mysql --datadir="$DATADIR" --skip-test-db >/dev/null
+# Idempotent DB + user setup (stdin for mysql)
+apply_schema() {
+	cat <<EOF
+CREATE DATABASE IF NOT EXISTS \`${MARIA_DATABASE}\`;
+CREATE USER IF NOT EXISTS '${MARIA_USER}'@'%' IDENTIFIED BY '${MARIA_PASSWORD}';
+GRANT ALL PRIVILEGES ON \`${MARIA_DATABASE}\`.* TO '${MARIA_USER}'@'%';
+ALTER USER 'root'@'localhost' IDENTIFIED BY '${MARIA_ROOT_PASSWORD}';
+FLUSH PRIVILEGES;
+EOF
+}
 
-    # Launch MariaDB in bootstrap mode
-    echo "${CLR_Y}Launching MariaDB...${CLR_RESET}"
+wait_bootstrap_root() {
+	i=0
+	while true; do
+		if mysqladmin --socket="$SOCKET" ping -u root --silent 2>/dev/null; then
+			apply_schema | mysql --socket="$SOCKET" -u root
+			return 0
+		fi
+		if mysqladmin --socket="$SOCKET" ping -u root -p"$MARIA_ROOT_PASSWORD" --silent 2>/dev/null; then
+			apply_schema | mysql --socket="$SOCKET" -u root -p"$MARIA_ROOT_PASSWORD"
+			return 0
+		fi
+		i=$((i + 1))
+		if [ "$i" -gt 60 ]; then
+			return 1
+		fi
+		sleep 1
+	done
+}
+
+start_bootstrap_daemon() {
 	mariadbd --user=mysql --datadir="$DATADIR" \
 		--skip-networking \
 		--socket="$SOCKET" \
 		--pid-file=/run/mysqld/mysqld-bootstrap.pid &
-	bootstrap_pid=$!
+	echo $!
+}
+
+# First setup only if $DATADIR/mysql does not exist
+if [ ! -d "$DATADIR/mysql" ]; then
+	echo "${CLR_Y}Initializing database...${CLR_RESET}"
+	mariadb-install-db --user=mysql --datadir="$DATADIR" --skip-test-db >/dev/null
+
+	echo "${CLR_Y}Launching MariaDB...${CLR_RESET}"
+	bootstrap_pid=$(start_bootstrap_daemon)
 
     # Wait for MariaDB to bootstrap. We'll wait for 60 seconds, checking every second.
     echo "${CLR_Y}Waiting for MariaDB to bootstrap...${CLR_RESET}"
@@ -61,19 +94,27 @@ if [ ! -d "$DATADIR/mysql" ]; then
 
     # Run a one-time SQL script to create database and user
 	echo "Creating database and user..."
-	mysql --socket="$SOCKET" -u root <<EOF
-CREATE DATABASE IF NOT EXISTS \`${MARIA_DATABASE}\`;
-CREATE USER IF NOT EXISTS '${MARIA_USER}'@'%' IDENTIFIED BY '${MARIA_PASSWORD}';
-GRANT ALL PRIVILEGES ON \`${MARIA_DATABASE}\`.* TO '${MARIA_USER}'@'%';
-ALTER USER 'root'@'localhost' IDENTIFIED BY '${MARIA_ROOT_PASSWORD}';
-FLUSH PRIVILEGES;
-EOF
+	apply_schema | mysql --socket="$SOCKET" -u root
 
-    # Shut down initial MariaDB
-    echo "${CLR_Y}Shutting down initial MariaDB...${CLR_RESET}"
+	echo "${CLR_Y}Shutting down initial MariaDB...${CLR_RESET}"
 	kill -TERM "$bootstrap_pid"
 	wait "$bootstrap_pid" 2>/dev/null || true
+	touch "$INIT_MARK"
+
+# Partial install: data exists but init marker missing (e.g. old buggy entrypoint)
+elif [ ! -f "$INIT_MARK" ]; then
+	echo "${CLR_Y}Recovering MariaDB setup (app user / schema)...${CLR_RESET}"
+	bootstrap_pid=$(start_bootstrap_daemon)
+	if ! wait_bootstrap_root; then
+		echo "${CLR_R}MariaDB recovery bootstrap failed (try: make clean + wipe data/mariadb).${CLR_RESET}" >&2
+		kill -TERM "$bootstrap_pid" 2>/dev/null || true
+		exit 1
+	fi
+	kill -TERM "$bootstrap_pid"
+	wait "$bootstrap_pid" 2>/dev/null || true
+	touch "$INIT_MARK"
 fi
 
 echo "${CLR_G}MariaDB is ready, starting...${CLR_RESET}"
-exec mariadbd --user=mysql --datadir="$DATADIR"
+# Force listen on all interfaces — Debian's 50-server.cnf often sets 127.0.0.1 only
+exec mariadbd --user=mysql --datadir="$DATADIR" --bind-address=0.0.0.0
