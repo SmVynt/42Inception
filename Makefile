@@ -49,7 +49,7 @@ up: $(NAME)
 		export DB_VOLUME="$(DB_VOLUME)" && \
 		export DOMAIN_NAME="$(DOMAIN_NAME)" && \
 		export USER_NAME="$(USER_NAME)" && \
-		$(COMPOSE) up --build
+		$(COMPOSE) up -d --build
 	@echo "$(GREEN)Project started$(RESET)"
 	@echo "$(YELLOW)Project is available at https://$(DOMAIN_NAME)$(RESET)"
 	@echo "$(YELLOW)VM IP: $(shell ip -4 addr show docker0 | grep -oP 'inet \K[\d.]+')$(RESET)"
