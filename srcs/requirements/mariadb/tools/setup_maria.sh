@@ -1,6 +1,11 @@
 #!/bin/sh
 set -eu
 
+CLR_R="\033[31m"
+CLR_G="\033[32m"
+CLR_Y="\033[33m"
+CLR_RESET="\033[0m"
+
 # Passwords: prefer Docker secrets
 if [ -r /run/secrets/db_root_password ]; then
 	MARIA_ROOT_PASSWORD="$(tr -d '\r\n' < /run/secrets/db_root_password)"
@@ -24,11 +29,11 @@ chown mysql:mysql /run/mysqld
 # First setup only if $DATADIR/mysql does not exist
 if [ ! -d "$DATADIR/mysql" ]; then
     # Initialize database
-    echo "Initializing database..."
+    echo "${CLR_Y}Initializing database...${CLR_RESET}"
 	mariadb-install-db --user=mysql --datadir="$DATADIR" --skip-test-db >/dev/null
 
     # Launch MariaDB in bootstrap mode
-    echo "Launching MariaDB..."
+    echo "${CLR_Y}Launching MariaDB...${CLR_RESET}"
 	mariadbd --user=mysql --datadir="$DATADIR" \
 		--skip-networking \
 		--socket="$SOCKET" \
@@ -36,7 +41,7 @@ if [ ! -d "$DATADIR/mysql" ]; then
 	bootstrap_pid=$!
 
     # Wait for MariaDB to bootstrap. We'll wait for 60 seconds, checking every second.
-    echo "Waiting for MariaDB to bootstrap..."
+    echo "${CLR_Y}Waiting for MariaDB to bootstrap...${CLR_RESET}"
 	i=0
 	while ! mysqladmin --socket="$SOCKET" ping -u root --silent 2>/dev/null; do
 		i=$((i + 1))
@@ -58,9 +63,10 @@ FLUSH PRIVILEGES;
 EOF
 
     # Shut down initial MariaDB
-    echo "Shutting down initial MariaDB..."
+    echo "${CLR_Y}Shutting down initial MariaDB...${CLR_RESET}"
 	kill -TERM "$bootstrap_pid"
 	wait "$bootstrap_pid" 2>/dev/null || true
 fi
 
+echo "${CLR_G}MariaDB is ready, starting...${CLR_RESET}"
 exec mariadbd --user=mysql --datadir="$DATADIR"
