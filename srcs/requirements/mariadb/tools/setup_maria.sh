@@ -14,11 +14,17 @@ if [ -r /run/secrets/db_password ]; then
 	MARIA_PASSWORD="$(tr -d '\r\n' < /run/secrets/db_password)"
 fi
 
-# Non-secret DB settings from .env / environment
-: "${MARIA_DATABASE:?MARIA_DATABASE is required}"
-: "${MARIA_USER:?MARIA_USER is required}"
-: "${MARIA_ROOT_PASSWORD:?MARIA_ROOT_PASSWORD is required (set env or secrets/db_root_password.txt)}"
-: "${MARIA_PASSWORD:?MARIA_PASSWORD is required (set env or secrets/db_password.txt)}"
+var_exists() {
+	# val becomes the value of the variable $1, or an empty string if the variable is not set
+	eval val="\${$1:-}"
+	# if val is empty, print error and exit
+	[ -z "$val" ] && echo "${CLR_R}Error: $1 is not set. $2${CLR_RESET}" >&2 && exit 1
+}
+
+var_exists MARIA_DATABASE       "Set in .env."
+var_exists MARIA_USER           "Set in .env."
+var_exists MARIA_ROOT_PASSWORD  "Mount secret db_root_password."
+var_exists MARIA_PASSWORD       "Mount secret db_password."
 
 DATADIR=/var/lib/mysql
 SOCKET=/run/mysqld/mysqld.sock

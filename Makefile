@@ -51,6 +51,11 @@ up:
 		$(COMPOSE) up -d --build
 	@echo "$(GREEN)Project started$(RESET)"
 
+down:
+	@echo "$(YELLOW)Stopping the project...$(RESET)"
+	$(COMPOSE) down
+	@echo "$(GREEN)Project stopped$(RESET)"
+
 show-status:
 	@docker ps -a
 

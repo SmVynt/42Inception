@@ -24,6 +24,8 @@ secrets:
     file: ../secrets/db_password.txt
   wp_password:
     file: ../secrets/wp_password.txt
+  wp_author_password:
+    file: ../secrets/wp_author_password.txt
 
 services:
   nginx:
@@ -54,6 +56,7 @@ services:
     secrets:
       - db_password
       - wp_password
+      - wp_author_password
     volumes:
       - wordpress_data:/var/www/html
     depends_on:
