@@ -36,10 +36,16 @@ all: $(NAME)
 $(NAME): $(SRC_DIR)
 	@if [ ! -f srcs/.env ]; then \
 		$(MAKE) init-secrets; \
-		echo "$(CLR_Y)Secrets scaffold created. Fill secrets before relying on defaults.$(CLR_RESET)"; \
+		echo "$(CLR_Y)Secrets copy created. Fill secrets before running the project!$(CLR_RESET)"; \
 	fi
-	@mkdir -p $(WP_VOLUME) $(DB_VOLUME)
-	@echo "$(CLR_G)Data dirs ready: $(WP_VOLUME), $(DB_VOLUME)$(CLR_RESET)"
+	@if [ ! -d $(WP_VOLUME) ]; then \
+		@echo "$(CLR_Y)Creating WP directory...$(CLR_RESET)"; \
+		@mkdir -p $(WP_VOLUME); \
+	fi
+	@if [ ! -d $(DB_VOLUME) ]; then \
+		@echo "$(CLR_Y)Creating DB directory...$(CLR_RESET)"; \
+		@mkdir -p $(DB_VOLUME); \
+	fi
 
 init-secrets:
 	@echo "$(CLR_Y)Initializing secrets...$(CLR_RESET)"

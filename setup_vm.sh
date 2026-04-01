@@ -15,10 +15,10 @@ if [ "$USER_NAME" = "root" ]; then
 	exit 1
 fi
 
-echo -e "${CLR_Y}=== Inception VM Setup for ${USER_NAME} ===${CLR_RESET}"
+echo -e "${CLR_B}=== Inception VM Setup for ${USER_NAME} ===${CLR_RESET}"
 
 # Docker and dependencies
-echo -e "${CLR_Y}Checking dependencies...${CLR_RESET}"
+echo -e "${CLR_B}Checking dependencies...${CLR_RESET}"
 sudo apt-get update -qq
 sudo apt-get install -y -qq docker.io git make curl > /dev/null
 if apt-cache show docker-compose-v2 > /dev/null 2>&1; then
@@ -27,20 +27,25 @@ fi
 sudo usermod -aG docker "$USER_NAME"
 echo -e "${CLR_G}Docker installed.${CLR_RESET}"
 echo -e "${CLR_Y}Log out and back in (or reboot) so the docker group applies.${CLR_RESET}"
+echo ""
 
 # Setup ssh access
-echo -e "${CLR_Y}Setting up SSH access...${CLR_RESET}"
+echo -e "${CLR_B}Setting up SSH access...${CLR_RESET}"
 sudo apt-get install -y -qq openssh-server > /dev/null
 sudo systemctl enable ssh
 sudo systemctl start ssh
 echo -e "${CLR_G}SSH access setup complete.${CLR_RESET}"
+echo ""
 
 # Show instructions
-echo -e "${CLR_Y}What to do next?${CLR_RESET}"
-echo -e "${CLR_B}Setup the VM access:${CLR_RESET}"
+echo -e "${CLR_B}What to do next?${CLR_RESET}"
+echo -e "${CLR_Y}Setup the VM access:${CLR_RESET}"
 echo -e "  ${CLR_Y}1.${CLR_RESET} Port forwarding:  Host 3022 → Guest 22 (SSH)"
 echo -e "  ${CLR_Y}2.${CLR_RESET} Port forwarding:  Host 443 → Guest 443 (HTTPS)"
-echo -e "${CLR_B}Access the VM using your SSH key: ssh -p 3022 ${USER_NAME}@127.0.0.1${CLR_RESET}"
+echo -e "${CLR_Y}Access the VM using your SSH key: ssh -p 3022 ${USER_NAME}@127.0.0.1$ if you want${CLR_RESET}"
+echo -e "${CLR_Y}run ${CLR_B}make init-secrets${CLR_RESET} to initialize the secrets${CLR_RESET}"
+echo -e "${CLR_Y}run ${CLR_B}make up${CLR_RESET} to start the project${CLR_RESET}"
+
 
 # Show how to run the project
 echo -e "${CLR_Y}How to run the project?${CLR_RESET}"
