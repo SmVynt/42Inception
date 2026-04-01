@@ -73,8 +73,8 @@ clean:
 		export DOMAIN_NAME="$(DOMAIN_NAME)" && \
 		export USER_NAME="$(USER_NAME)" && \
 		$(COMPOSE) down -v 2>/dev/null || true
-	@$(RM) $(DATA_DIR)/wordpress
-	@$(RM) $(DATA_DIR)/mariadb
+	@sudo $(RM) $(DATA_DIR)/wordpress
+	@sudo $(RM) $(DATA_DIR)/mariadb
 	@echo "$(GREEN)Data directories removed$(RESET)"
 
 fclean: clean
