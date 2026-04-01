@@ -10,7 +10,7 @@ server {
     ssl_protocols TLSv1.2 TLSv1.3;
 
     # Docker DNS; ipv6=off so fastcgi_pass hits PHP-FPM over IPv4 (FPM listens on 0.0.0.0:9000).
-    # resolver 127.0.0.11 valid=10s ipv6=off;
+    resolver 127.0.0.11 valid=10s ipv6=off;
 
     index index.html index.php;
     root /var/www/html;
