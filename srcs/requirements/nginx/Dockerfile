@@ -1,6 +1,11 @@
 FROM debian:bookworm-slim
 
-RUN apt-get update && apt-get install -y nginx \
+# Install nginx for web server
+# Install gettext-base for text processing (we'll use it to process the nginx configuration file)
+# Install openssl for SSL support (we'll use it to generate SSL certificates)
+# --no-install-recommends: Don't install recommended packages.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+	nginx \
 	gettext-base \
 	openssl
 
