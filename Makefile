@@ -13,7 +13,7 @@ SRC_DIR			:= srcs/
 RM				:= rm -rf
 
 COMPOSE_FILE	:= srcs/docker-compose.yml
-COMPOSE			:= docker compose -f $(COMPOSE_FILE) --project-directory srcs logs mariadb
+COMPOSE			:= docker compose -f $(COMPOSE_FILE) --project-directory srcs
 
 WP_VOLUME		:= $(DATA_DIR)/wordpress
 DB_VOLUME		:= $(DATA_DIR)/mariadb
