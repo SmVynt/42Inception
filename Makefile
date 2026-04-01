@@ -56,7 +56,11 @@ up:
 
 down:
 	@echo "$(YELLOW)Stopping the project...$(RESET)"
-	$(COMPOSE) down
+	@export WP_VOLUME="$(WP_VOLUME)" && \
+		export DB_VOLUME="$(DB_VOLUME)" && \
+		export DOMAIN_NAME="$(DOMAIN_NAME)" && \
+		export USER_NAME="$(USER_NAME)" && \
+		$(COMPOSE) down
 	@echo "$(GREEN)Project stopped$(RESET)"
 
 show-status:
