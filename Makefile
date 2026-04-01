@@ -46,6 +46,7 @@ $(NAME): $(SRC_DIR)
 		@echo "$(CLR_Y)Creating DB directory...$(CLR_RESET)"; \
 		@mkdir -p $(DB_VOLUME); \
 	fi
+	@echo "$(CLR_G)Project is ready to run!$(CLR_RESET)"
 
 init-secrets:
 	@echo "$(CLR_Y)Initializing secrets...$(CLR_RESET)"
