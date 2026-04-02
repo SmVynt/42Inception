@@ -113,8 +113,9 @@ services:
     environment:
       DOMAIN_NAME: ${DOMAIN_NAME}
       FTP_USER: ${FTP_USER:-wpftp}
-      FTP_PASV_ADDRESS: ${FTP_PASV_ADDRESS:-}
       FTP_PORT: ${FTP_PORT:-21}
+    # FTP_PASV_ADDRESS only from env_file — do not set it here with ${...:-} or an empty value
+    # overrides srcs/.env and breaks PASV when DOMAIN_NAME does not resolve in the container.
     secrets:
       - ftp_password
     volumes:
