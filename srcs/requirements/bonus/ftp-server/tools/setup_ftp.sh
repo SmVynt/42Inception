@@ -29,15 +29,33 @@ if [ -z "$FTP_PASSWORD" ]; then
 fi
 
 if [ -n "${FTP_PASV_ADDRESS:-}" ]; then
-	PASV_ADDR="$FTP_PASV_ADDRESS"
+	PASV_RAW="$FTP_PASV_ADDRESS"
 elif [ -n "${DOMAIN_NAME:-}" ]; then
-	PASV_ADDR="$DOMAIN_NAME"
+	PASV_RAW="$DOMAIN_NAME"
 else
-	PASV_ADDR=$(hostname -i 2>/dev/null | awk '{print $1}')
+	PASV_RAW=$(hostname -i 2>/dev/null | awk '{print $1}')
 fi
-if [ -z "$PASV_ADDR" ]; then
+# trim spaces / CR (common in .env)
+PASV_RAW=$(printf '%s' "$PASV_RAW" | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+if [ -z "$PASV_RAW" ]; then
 	echo "ftp: set FTP_PASV_ADDRESS or DOMAIN_NAME for passive mode" >&2
 	exit 1
+fi
+
+# vsftpd defaults to pasv_addr_resolve=NO → hostnames in pasv_address are invalid unless resolved.
+PASV_ADDR="$PASV_RAW"
+if ! printf '%s\n' "$PASV_ADDR" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
+	RESOLVED=$(getent ahostsv4 "$PASV_RAW" 2>/dev/null | awk '{print $1; exit}')
+	if [ -z "$RESOLVED" ]; then
+		RESOLVED=$(getent hosts "$PASV_RAW" 2>/dev/null | awk '{print $1; exit}')
+	fi
+	if printf '%s\n' "$RESOLVED" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
+		PASV_ADDR="$RESOLVED"
+	else
+		echo "ftp: could not resolve '${PASV_RAW}' to IPv4 for pasv_address" >&2
+		echo "ftp: set FTP_PASV_ADDRESS to a numeric IP (e.g. 127.0.0.1 with VirtualBox port forwarding)" >&2
+		exit 1
+	fi
 fi
 
 if ! id -u "$FTP_USER" >/dev/null 2>&1; then
@@ -64,5 +82,6 @@ install -d -m 0755 -o "$WP_UID" -g "$WP_GROUP" /var/www/html 2>/dev/null || true
 echo "${CLR_G}FTP configured. Starting...${CLR_RESET}"
 echo "${CLR_G}FTP_USER: ${FTP_USER}${CLR_RESET}"
 echo "${CLR_G}FTP_PASSWORD: ${FTP_PASSWORD}${CLR_RESET}"
+echo "${CLR_G}PASV address (for clients): ${PASV_ADDR}${CLR_RESET}"
 
 exec /usr/sbin/vsftpd /tmp/vsftpd.conf

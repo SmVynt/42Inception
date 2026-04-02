@@ -50,6 +50,11 @@ $(NAME): $(SRC_DIR)
 	fi
 	@echo "$(CLR_G)Project is ready to run!$(CLR_RESET)"
 
+clean-secrets:
+	@echo "$(CLR_Y)Cleaning secrets...$(CLR_RESET)"
+	@$(RM) $(SECRETS)
+	@echo "$(CLR_G)Secrets cleaned$(CLR_RESET)"
+
 init-secrets:
 	@echo "$(CLR_Y)Initializing secrets if they don't exist...$(CLR_RESET)"
 	@mkdir -p secrets
