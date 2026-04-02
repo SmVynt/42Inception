@@ -37,6 +37,13 @@ sudo systemctl start ssh
 echo -e "${CLR_G}SSH access setup complete.${CLR_RESET}"
 echo ""
 
+# Setup Firewall access for FTP
+echo -e "${CLR_B}Setting up Firewall access for FTP...${CLR_RESET}"
+sudo ufw allow 21/tcp
+sudo ufw allow 21100:21110/tcp
+echo -e "${CLR_G}Firewall access for FTP setup complete.${CLR_RESET}"
+echo ""
+
 # Show instructions
 echo -e "${CLR_B}What to do next?${CLR_RESET}"
 echo -e "${CLR_Y}Setup the VM access:${CLR_RESET}"

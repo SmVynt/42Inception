@@ -75,6 +75,7 @@ up: $(NAME)
 
 rebuild: $(NAME)
 	@echo "$(CLR_Y)Rebuilding from scratch...$(CLR_RESET)"
+	@$(MAKE) all
 	@$(COMPOSE) build --no-cache
 	@$(COMPOSE) up -d
 	@echo "$(CLR_G)Rebuilt and up: https://$(DOMAIN_NAME)$(CLR_RESET)"
