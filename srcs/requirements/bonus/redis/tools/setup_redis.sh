@@ -40,6 +40,9 @@ set_or_append 'bind' 'bind 0.0.0.0'
 # Keep protected mode enabled and explicitly allow only known behavior
 set_or_append 'protected-mode' 'protected-mode yes'
 
+# Containers must keep the main process in foreground (PID 1).
+set_or_append 'daemonize' 'daemonize no'
+
 # Memory policy for cache-like usage
 set_or_append 'maxmemory' 'maxmemory 256mb'
 set_or_append 'maxmemory-policy' 'maxmemory-policy allkeys-lru'
