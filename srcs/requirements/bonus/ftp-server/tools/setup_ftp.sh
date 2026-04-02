@@ -41,7 +41,11 @@ if [ -z "$PASV_ADDR" ]; then
 fi
 
 if ! id -u "$FTP_USER" >/dev/null 2>&1; then
-	useradd -M -d /var/www/html -s /usr/sbin/nologin -g "$WP_GROUP" -o -u "$WP_UID" "$FTP_USER"
+	# stderr hides benign "uid outside UID_MIN/UID_MAX" when matching www-data (33)
+	if ! useradd -M -d /var/www/html -s /usr/sbin/nologin -g "$WP_GROUP" -o -u "$WP_UID" "$FTP_USER" 2>/dev/null; then
+		echo "ftp: useradd failed for $FTP_USER" >&2
+		exit 1
+	fi
 fi
 printf '%s:%s\n' "$FTP_USER" "$FTP_PASSWORD" | chpasswd
 
