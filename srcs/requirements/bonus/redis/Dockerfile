@@ -7,6 +7,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY tools/setup_redis.sh /setup_redis.sh
 RUN chmod +x /setup_redis.sh
 
-EXPOSE 6379
+EXPOSE ${REDIS_PORT:-6379}
 
 ENTRYPOINT ["/setup_redis.sh"]

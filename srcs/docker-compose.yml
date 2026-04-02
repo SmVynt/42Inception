@@ -28,6 +28,8 @@ secrets:
     file: ../secrets/wp_author_password.txt
   redis_password:
     file: ../secrets/redis_password_bonus.txt
+  ftp_password:
+    file: ../secrets/ftp_password_bonus.txt
 
 services:
   nginx:
@@ -76,9 +78,9 @@ services:
     build: ./requirements/mariadb/.
     env_file:
       - .env
-    environment:
-      MARIA_DATABASE: ${MARIA_DATABASE}
-      MARIA_USER: ${MARIA_USER}
+    # environment:
+    #   MARIA_DATABASE: ${MARIA_DATABASE}
+    #   MARIA_USER: ${MARIA_USER}
     secrets:
       - db_root_password
       - db_password
@@ -96,6 +98,27 @@ services:
       - .env
     secrets:
       - redis_password
+    networks:
+      - inception-network
+    restart: always
+
+  ftp-server:
+    container_name: ftp-server
+    build: ./requirements/bonus/ftp-server/.
+    ports:
+      - "21:21"
+      - "21100-21110:21100-21110"
+    env_file:
+      - .env
+    environment:
+      DOMAIN_NAME: ${DOMAIN_NAME}
+      FTP_USER: ${FTP_USER:-wpftp}
+      FTP_PASV_ADDRESS: ${FTP_PASV_ADDRESS:-}
+      FTP_PORT: ${FTP_PORT:-21}
+    secrets:
+      - ftp_password
+    volumes:
+      - wordpress_data:/var/www/html
     networks:
       - inception-network
     restart: always
