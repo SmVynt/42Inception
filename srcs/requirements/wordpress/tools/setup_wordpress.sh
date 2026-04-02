@@ -54,18 +54,6 @@ while ! mysqladmin ping -h "${WORDPRESS_DB_HOST}" -P "${MARIA_PORT}" \
 done
 echo "${CLR_G}MariaDB is reachable.${CLR_RESET}"
 
-apply_redis_wp_config() {
-	wp config set WP_CACHE true --raw --allow-root
-	wp config set WP_REDIS_CLIENT phpredis --allow-root
-	wp config set WP_REDIS_HOST "${REDIS_HOST}" --allow-root
-	wp config set WP_REDIS_PORT "${REDIS_PORT}" --raw --allow-root
-	wp config set WP_REDIS_TIMEOUT 1 --raw --allow-root
-	wp config set WP_REDIS_READ_TIMEOUT 1 --raw --allow-root
-	if [ -n "${REDIS_PASSWORD:-}" ]; then
-		wp config set WP_REDIS_PASSWORD "${REDIS_PASSWORD}" --allow-root
-	fi
-}
-
 # Wait for Redis to be reachable
 i=0
 while ! php -r "exit(@fsockopen('${REDIS_HOST}', (int) '${REDIS_PORT}') ? 0 : 1);" 2>/dev/null; do
@@ -79,10 +67,16 @@ while ! php -r "exit(@fsockopen('${REDIS_HOST}', (int) '${REDIS_PORT}') ? 0 : 1)
 done
 echo "${CLR_G}Redis is reachable.${CLR_RESET}"
 
-if ! wp core is-installed --allow-root 2>/dev/null; then
-	echo "${CLR_Y}Installing WordPress (${WORDPRESS_VERSION})...${CLR_RESET}"
-	wp core download --allow-root --locale=en_US --version="${WORDPRESS_VERSION}" --force
+# wp core is-installed needs wp-config.php. Without it, WP-CLI returns "not installed"
+# even if MariaDB already has tables (persistent volume) — avoid duplicate install / user create.
 
+if [ ! -f /var/www/html/wp-load.php ]; then
+	echo "${CLR_Y}Downloading WordPress (${WORDPRESS_VERSION})...${CLR_RESET}"
+	wp core download --allow-root --locale=en_US --version="${WORDPRESS_VERSION}" --force
+fi
+
+if [ ! -f /var/www/html/wp-config.php ]; then
+	echo "${CLR_Y}Creating wp-config.php...${CLR_RESET}"
 	wp config create --allow-root \
 		--dbname="${WORDPRESS_DB_NAME}" \
 		--dbuser="${WORDPRESS_DB_USER}" \
@@ -90,35 +84,44 @@ if ! wp core is-installed --allow-root 2>/dev/null; then
 		--dbhost="${WORDPRESS_DB_HOST}:${MARIA_PORT}" \
 		--skip-check \
 		--force
+fi
 
-	#----------------------------------
-	#---------BONUS--------------------
-	#----------------------------------
-	apply_redis_wp_config
-	rm -f /var/www/html/wp-content/object-cache.php
-	#----------------------------------
+wp config set WP_CACHE true --raw --allow-root
+wp config set WP_REDIS_CLIENT phpredis --allow-root
+wp config set WP_REDIS_HOST "${REDIS_HOST}" --allow-root
+wp config set WP_REDIS_PORT "${REDIS_PORT}" --raw --allow-root
+wp config set WP_REDIS_TIMEOUT 1 --raw --allow-root
+wp config set WP_REDIS_READ_TIMEOUT 1 --raw --allow-root
+if [ -n "${REDIS_PASSWORD:-}" ]; then
+	wp config set WP_REDIS_PASSWORD "${REDIS_PASSWORD}" --allow-root
+fi
+rm -f /var/www/html/wp-content/object-cache.php
 
+if ! wp core is-installed --allow-root 2>/dev/null; then
+	echo "${CLR_Y}Running wp core install...${CLR_RESET}"
 	wp core install --allow-root \
 		--url="https://${DOMAIN_NAME}" \
 		--title="${WORDPRESS_TITLE}" \
 		--admin_user="${WP_ADMIN_USER}" \
 		--admin_password="${WP_ADMIN_PASSWORD}" \
 		--admin_email="${WP_ADMIN_EMAIL}"
-
-	wp user create --allow-root \
-		"${WP_USER}" "${WP_USER_EMAIL}" \
-		--role=author \
-		--user_pass="${WP_AUTHOR_PASSWORD}"
-
-	chown -R www-data:www-data /var/www/html
 	echo "${CLR_G}WordPress installed.${CLR_RESET}"
 fi
 
-#----------------------------------
-#---------BONUS--------------------
-#----------------------------------
-apply_redis_wp_config
+# Author user (subject): only create if site exists and user is missing
+if wp core is-installed --allow-root 2>/dev/null; then
+	if ! wp user get "${WP_USER}" --allow-root --field=ID >/dev/null 2>&1; then
+		echo "${CLR_Y}Creating author user ${WP_USER}...${CLR_RESET}"
+		wp user create --allow-root \
+			"${WP_USER}" "${WP_USER_EMAIL}" \
+			--role=author \
+			--user_pass="${WP_AUTHOR_PASSWORD}"
+	fi
+fi
 
+chown -R www-data:www-data /var/www/html
+
+# Bonus: install and activate the redis-cache plugin
 if ! wp plugin is-installed redis-cache --allow-root >/dev/null 2>&1; then
 	wp plugin install redis-cache --activate --allow-root
 else
@@ -126,7 +129,6 @@ else
 fi
 
 wp redis enable --allow-root >/dev/null 2>&1 || true
-#---------BONUS--------------------
 
 echo "${CLR_G}Starting PHP-FPM...${CLR_RESET}"
 exec php-fpm8.2 -F
