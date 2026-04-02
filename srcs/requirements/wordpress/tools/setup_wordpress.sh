@@ -8,6 +8,8 @@ CLR_RESET="\033[0m"
 
 : "${MARIA_PORT:=3306}"
 : "${WORDPRESS_VERSION:=6.4.3}"
+: "${REDIS_HOST:=redis}"
+: "${REDIS_PORT:=6379}"
 
 # Docker Compose mounts secrets under /run/secrets/<secret_name>
 if [ -r /run/secrets/db_password ]; then
@@ -18,6 +20,9 @@ if [ -r /run/secrets/wp_password ]; then
 fi
 if [ -r /run/secrets/wp_author_password ]; then
 	export WP_AUTHOR_PASSWORD="$(tr -d '\r\n' < /run/secrets/wp_author_password)"
+fi
+if [ -r /run/secrets/redis_password ]; then
+	export REDIS_PASSWORD="$(tr -d '\r\n' < /run/secrets/redis_password)"
 fi
 
 var_exists() {
@@ -77,6 +82,30 @@ if ! wp core is-installed --allow-root 2>/dev/null; then
 	chown -R www-data:www-data /var/www/html
 	echo "${CLR_G}WordPress installed.${CLR_RESET}"
 fi
+
+#----------------------------------
+#---------BONUS--------------------
+#----------------------------------
+# Redis-cache setup: can run both on fresh install and existing sites.
+wp config set WP_CACHE true --raw --allow-root
+wp config set WP_REDIS_CLIENT phpredis --allow-root
+wp config set WP_REDIS_HOST "${REDIS_HOST}" --allow-root
+wp config set WP_REDIS_PORT "${REDIS_PORT}" --raw --allow-root
+wp config set WP_REDIS_TIMEOUT 1 --raw --allow-root
+wp config set WP_REDIS_READ_TIMEOUT 1 --raw --allow-root
+
+if [ -n "${REDIS_PASSWORD:-}" ]; then
+	wp config set WP_REDIS_PASSWORD "${REDIS_PASSWORD}" --allow-root
+fi
+
+if ! wp plugin is-installed redis-cache --allow-root >/dev/null 2>&1; then
+	wp plugin install redis-cache --activate --allow-root
+else
+	wp plugin activate redis-cache --allow-root >/dev/null 2>&1 || true
+fi
+
+wp redis enable --allow-root >/dev/null 2>&1 || true
+#---------BONUS--------------------
 
 echo "${CLR_G}Starting PHP-FPM...${CLR_RESET}"
 exec php-fpm8.2 -F

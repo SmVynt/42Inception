@@ -16,7 +16,8 @@ SECRETS 		:= \
 				$(SECRET_DIR)db_password.txt \
 				$(SECRET_DIR)db_root_password.txt \
 				$(SECRET_DIR)wp_password.txt \
-				$(SECRET_DIR)wp_author_password.txt
+				$(SECRET_DIR)wp_author_password.txt \
+				$(SECRET_DIR)redis_password_bonus.txt
 
 COMPOSE_FILE	:= srcs/docker-compose.yml
 COMPOSE			:= docker compose -f $(COMPOSE_FILE) --project-directory srcs
@@ -57,6 +58,7 @@ init-secrets:
 	@[ -f secrets/db_root_password.txt ] || cp secrets/db_root_password.txt.example secrets/db_root_password.txt
 	@[ -f secrets/wp_password.txt ] || cp secrets/wp_password.txt.example secrets/wp_password.txt
 	@[ -f secrets/wp_author_password.txt ] || cp secrets/wp_author_password.txt.example secrets/wp_author_password.txt
+	@[ -f secrets/redis_password_bonus.txt ] || cp secrets/redis_password_bonus.txt.example secrets/redis_password_bonus.txt
 	@echo "$(CLR_G)Secrets initialized$(CLR_RESET)"
 
 build: $(NAME)

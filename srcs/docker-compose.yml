@@ -26,6 +26,8 @@ secrets:
     file: ../secrets/wp_password.txt
   wp_author_password:
     file: ../secrets/wp_author_password.txt
+  redis_password:
+    file: ../secrets/redis_password_bonus.txt
 
 services:
   nginx:
@@ -40,7 +42,7 @@ services:
     depends_on:
       - wordpress
     volumes:
-      - wordpress_data:/var/www/html:ro
+      - wordpress_data:/var/www/html:ro #read-only access
     networks:
       - inception-network
     restart: always
@@ -59,6 +61,7 @@ services:
       - db_password
       - wp_password
       - wp_author_password
+      - redis_password
     volumes:
       - wordpress_data:/var/www/html
     depends_on:
@@ -80,6 +83,18 @@ services:
       - db_password
     volumes:
       - mariadb_data:/var/lib/mysql
+    networks:
+      - inception-network
+    restart: always
+
+  # Bonus services
+  redis:
+    container_name: redis
+    build: ./requirements/bonus/redis/.
+    env_file:
+      - .env
+    secrets:
+      - redis_password
     networks:
       - inception-network
     restart: always
