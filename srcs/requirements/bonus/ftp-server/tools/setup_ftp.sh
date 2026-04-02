@@ -54,6 +54,5 @@ install -d -m 0755 -o "$WP_UID" -g "$WP_GROUP" /var/www/html 2>/dev/null || true
 echo "${CLR_G}FTP configured. Starting...${CLR_RESET}"
 echo "${CLR_G}FTP_USER: ${FTP_USER}${CLR_RESET}"
 echo "${CLR_G}FTP_PASSWORD: ${FTP_PASSWORD}${CLR_RESET}"
-echo "${CLR_G}PASV address (for clients): ${PASV_ADDR}${CLR_RESET}"
 
 exec /usr/sbin/vsftpd /tmp/vsftpd.conf

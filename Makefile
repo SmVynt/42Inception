@@ -53,6 +53,7 @@ $(NAME): $(SRC_DIR)
 clean-secrets:
 	@echo "$(CLR_Y)Cleaning secrets...$(CLR_RESET)"
 	@$(RM) $(SECRETS)
+	@$(RM) srcs/.env
 	@echo "$(CLR_G)Secrets cleaned$(CLR_RESET)"
 
 init-secrets:
