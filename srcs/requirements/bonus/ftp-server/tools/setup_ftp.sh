@@ -28,7 +28,6 @@ if [ -z "$FTP_PASSWORD" ]; then
 	exit 1
 fi
 
-# Set FTP_PASV_ADDRESS in .env to your VM/host IP, or rely on DOMAIN_NAME if it resolves for clients.
 if [ -n "${FTP_PASV_ADDRESS:-}" ]; then
 	PASV_ADDR="$FTP_PASV_ADDRESS"
 elif [ -n "${DOMAIN_NAME:-}" ]; then
@@ -41,7 +40,6 @@ if [ -z "$PASV_ADDR" ]; then
 	exit 1
 fi
 
-# FTP-only user, same numeric id as www-data so uploads match WordPress file ownership
 if ! id -u "$FTP_USER" >/dev/null 2>&1; then
 	useradd -M -d /var/www/html -s /usr/sbin/nologin -g "$WP_GROUP" -o -u "$WP_UID" "$FTP_USER"
 fi
@@ -49,12 +47,15 @@ printf '%s:%s\n' "$FTP_USER" "$FTP_PASSWORD" | chpasswd
 
 install -d -m 0755 -o "$WP_UID" -g "$WP_GROUP" /var/www/html 2>/dev/null || true
 
-cat > /etc/vsftpd/pasv.conf <<EOF
-listen_port=${FTP_PORT}
-pasv_enable=YES
-pasv_address=${PASV_ADDR}
-pasv_min_port=${PASV_MIN_PORT}
-pasv_max_port=${PASV_MAX_PORT}
-EOF
+# Single merged config (vsftpd does not support include=)
+{
+	cat /etc/vsftpd.base.conf
+	printf '\n# Runtime (do not edit; regenerated each start)\n'
+	printf 'listen_port=%s\n' "$FTP_PORT"
+	printf 'pasv_enable=YES\n'
+	printf 'pasv_address=%s\n' "$PASV_ADDR"
+	printf 'pasv_min_port=%s\n' "$PASV_MIN_PORT"
+	printf 'pasv_max_port=%s\n' "$PASV_MAX_PORT"
+} > /tmp/vsftpd.conf
 
-exec /usr/sbin/vsftpd /etc/vsftpd.conf
+exec /usr/sbin/vsftpd /tmp/vsftpd.conf
