@@ -90,20 +90,27 @@ ps:
 
 clean:
 	@echo "$(CLR_Y)Stopping the Project and removing project volumes...$(CLR_RESET)"
-	@$(COMPOSE) down -v 2>/dev/null || true
+	@$(COMPOSE) down -v --rmi local 2>/dev/null || true
 	@sudo $(RM) $(WP_VOLUME) $(DB_VOLUME)
 	@echo "$(CLR_G)Project data removed$(CLR_RESET)"
 
-fclean: clean
-	@echo "$(CLR_Y)Remove the secrets and the .env file? (y/n)$(CLR_RESET)"
-	@read -r confirm; \
-	if [ "$$confirm" = "y" ]; then \
-		$(RM) $(SECRETS); \
-		$(RM) srcs/.env; \
-		echo "$(CLR_G)Secrets and .env removed$(CLR_RESET)"; \
-	else \
-		echo "$(CLR_Y)Aborted$(CLR_RESET)"; \
-	fi
+# Full reset: volumes, host data, project images, build cache, secrets and .env.
+# Preserves templates: secrets/*.example and srcs/.env.example.
+fclean:
+	@echo "$(CLR_Y)Full clean (stack, volumes, data dirs, project images, build cache, secrets, .env)...$(CLR_RESET)"
+	@make clean
+	@echo "$(CLR_Y)Pruning build cache...$(CLR_RESET)"
+	@docker builder prune -af 2>/dev/null || docker buildx prune -af 2>/dev/null || true
+    @echo "$(CLR_Y)Remove the secrets and the .env file? (y/n)$(CLR_RESET)"
+    @read -r confirm; \
+    if [ "$$confirm" = "y" ]; then \
+        $(RM) $(SECRETS); \
+        $(RM) srcs/.env; \
+        echo "$(CLR_G)Secrets and .env removed$(CLR_RESET)"; \
+    else \
+        echo "$(CLR_Y)Secrets and .env not removed$(CLR_RESET)"; \
+    fi
+	@echo "$(CLR_G)Full clean done$(CLR_RESET)"
 
 help:
 	@echo "$(CLR_Y)Inception — Docker Compose$(CLR_RESET)"
@@ -114,8 +121,8 @@ help:
 	@echo "  make rebuild      build --no-cache && up -d"
 	@echo "  make logs         Follow container logs"
 	@echo "  make ps           docker ps -a"
-	@echo "  make clean        compose down -v + remove host data dirs"
-	@echo "  make fclean       clean + remove secrets and srcs/.env"
+	@echo "  make clean        compose down -v + remove host data dirs (images/cache kept)"
+	@echo "  make fclean       full reset + --rmi local + prune build cache; keeps *example files"
 	@echo "  make init-secrets Copy .env.example and secrets/*.example"
 
 .PHONY: all help $(NAME) init-secrets build up rebuild down logs ps clean fclean
