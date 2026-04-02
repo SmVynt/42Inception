@@ -39,17 +39,17 @@ $(NAME): $(SRC_DIR)
 		echo "$(CLR_Y)Secrets copy created. Fill secrets before running the project!$(CLR_RESET)"; \
 	fi
 	@if [ ! -d $(WP_VOLUME) ]; then \
-		@echo "$(CLR_Y)Creating WP directory...$(CLR_RESET)"; \
-		@mkdir -p $(WP_VOLUME); \
+		echo "$(CLR_Y)Creating WP directory...$(CLR_RESET)"; \
+		mkdir -p $(WP_VOLUME); \
 	fi
 	@if [ ! -d $(DB_VOLUME) ]; then \
-		@echo "$(CLR_Y)Creating DB directory...$(CLR_RESET)"; \
-		@mkdir -p $(DB_VOLUME); \
+		echo "$(CLR_Y)Creating DB directory...$(CLR_RESET)"; \
+		mkdir -p $(DB_VOLUME); \
 	fi
 	@echo "$(CLR_G)Project is ready to run!$(CLR_RESET)"
 
 init-secrets:
-	@echo "$(CLR_Y)Initializing secrets...$(CLR_RESET)"
+	@echo "$(CLR_Y)Initializing secrets if they don't exist...$(CLR_RESET)"
 	@mkdir -p secrets
 	@[ -f srcs/.env ] || cp srcs/.env.example srcs/.env
 	@chmod 600 srcs/.env
@@ -60,12 +60,12 @@ init-secrets:
 	@echo "$(CLR_G)Secrets initialized$(CLR_RESET)"
 
 build: $(NAME)
-	@echo "$(CLR_Y)Building images...$(CLR_RESET)"
+	@echo "$(CLR_Y)Building the images...$(CLR_RESET)"
 	@$(COMPOSE) build
 	@echo "$(CLR_G)Build finished$(CLR_RESET)"
 
 up: $(NAME)
-	@echo "$(CLR_Y)Starting stack...$(CLR_RESET)"
+	@echo "$(CLR_Y)Starting the project...$(CLR_RESET)"
 	@$(COMPOSE) up -d --build
 	@echo "$(CLR_G)Up: https://$(DOMAIN_NAME)$(CLR_RESET)"
 
