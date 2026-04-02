@@ -66,6 +66,7 @@ services:
       - wordpress_data:/var/www/html
     depends_on:
       - mariadb
+      - redis
     networks:
       - inception-network
     restart: always

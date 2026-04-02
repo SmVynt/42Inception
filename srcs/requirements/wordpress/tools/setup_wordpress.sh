@@ -54,6 +54,31 @@ while ! mysqladmin ping -h "${WORDPRESS_DB_HOST}" -P "${MARIA_PORT}" \
 done
 echo "${CLR_G}MariaDB is reachable.${CLR_RESET}"
 
+apply_redis_wp_config() {
+	wp config set WP_CACHE true --raw --allow-root
+	wp config set WP_REDIS_CLIENT phpredis --allow-root
+	wp config set WP_REDIS_HOST "${REDIS_HOST}" --allow-root
+	wp config set WP_REDIS_PORT "${REDIS_PORT}" --raw --allow-root
+	wp config set WP_REDIS_TIMEOUT 1 --raw --allow-root
+	wp config set WP_REDIS_READ_TIMEOUT 1 --raw --allow-root
+	if [ -n "${REDIS_PASSWORD:-}" ]; then
+		wp config set WP_REDIS_PASSWORD "${REDIS_PASSWORD}" --allow-root
+	fi
+}
+
+# Wait for Redis to be reachable
+i=0
+while ! php -r "exit(@fsockopen('${REDIS_HOST}', (int) '${REDIS_PORT}') ? 0 : 1);" 2>/dev/null; do
+	i=$((i + 1))
+	if [ "$i" -gt 60 ]; then
+		echo "${CLR_R}Redis not reachable at ${REDIS_HOST}:${REDIS_PORT}${CLR_RESET}" >&2
+		exit 1
+	fi
+	echo "${CLR_Y}Waiting for Redis...${CLR_RESET}"
+	sleep 1
+done
+echo "${CLR_G}Redis is reachable.${CLR_RESET}"
+
 if ! wp core is-installed --allow-root 2>/dev/null; then
 	echo "${CLR_Y}Installing WordPress (${WORDPRESS_VERSION})...${CLR_RESET}"
 	wp core download --allow-root --locale=en_US --version="${WORDPRESS_VERSION}" --force
@@ -66,6 +91,13 @@ if ! wp core is-installed --allow-root 2>/dev/null; then
 		--skip-check \
 		--force
 
+	#----------------------------------
+	#---------BONUS--------------------
+	#----------------------------------
+	apply_redis_wp_config
+	rm -f /var/www/html/wp-content/object-cache.php
+	#----------------------------------
+
 	wp core install --allow-root \
 		--url="https://${DOMAIN_NAME}" \
 		--title="${WORDPRESS_TITLE}" \
@@ -73,7 +105,6 @@ if ! wp core is-installed --allow-root 2>/dev/null; then
 		--admin_password="${WP_ADMIN_PASSWORD}" \
 		--admin_email="${WP_ADMIN_EMAIL}"
 
-	# Subject: two users, one admin + one regular
 	wp user create --allow-root \
 		"${WP_USER}" "${WP_USER_EMAIL}" \
 		--role=author \
@@ -86,17 +117,7 @@ fi
 #----------------------------------
 #---------BONUS--------------------
 #----------------------------------
-# Redis-cache setup: can run both on fresh install and existing sites.
-wp config set WP_CACHE true --raw --allow-root
-wp config set WP_REDIS_CLIENT phpredis --allow-root
-wp config set WP_REDIS_HOST "${REDIS_HOST}" --allow-root
-wp config set WP_REDIS_PORT "${REDIS_PORT}" --raw --allow-root
-wp config set WP_REDIS_TIMEOUT 1 --raw --allow-root
-wp config set WP_REDIS_READ_TIMEOUT 1 --raw --allow-root
-
-if [ -n "${REDIS_PASSWORD:-}" ]; then
-	wp config set WP_REDIS_PASSWORD "${REDIS_PASSWORD}" --allow-root
-fi
+apply_redis_wp_config
 
 if ! wp plugin is-installed redis-cache --allow-root >/dev/null 2>&1; then
 	wp plugin install redis-cache --activate --allow-root
