@@ -56,7 +56,7 @@ echo "${CLR_G}MariaDB is reachable.${CLR_RESET}"
 
 if ! wp core is-installed --allow-root 2>/dev/null; then
 	echo "${CLR_Y}Installing WordPress (${WORDPRESS_VERSION})...${CLR_RESET}"
-	wp core download --allow-root --locale=en_US --version="${WORDPRESS_VERSION}"
+	wp core download --allow-root --locale=en_US --version="${WORDPRESS_VERSION}" --force
 
 	wp config create --allow-root \
 		--dbname="${WORDPRESS_DB_NAME}" \
