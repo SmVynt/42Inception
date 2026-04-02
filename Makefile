@@ -98,18 +98,18 @@ clean:
 # Preserves templates: secrets/*.example and srcs/.env.example.
 fclean:
 	@echo "$(CLR_Y)Full clean (stack, volumes, data dirs, project images, build cache, secrets, .env)...$(CLR_RESET)"
-	@make clean
+	@$(MAKE) clean
 	@echo "$(CLR_Y)Pruning build cache...$(CLR_RESET)"
 	@docker builder prune -af 2>/dev/null || docker buildx prune -af 2>/dev/null || true
-    @echo "$(CLR_Y)Remove the secrets and the .env file? (y/n)$(CLR_RESET)"
-    @read -r confirm; \
-    if [ "$$confirm" = "y" ]; then \
-        $(RM) $(SECRETS); \
-        $(RM) srcs/.env; \
-        echo "$(CLR_G)Secrets and .env removed$(CLR_RESET)"; \
-    else \
-        echo "$(CLR_Y)Secrets and .env not removed$(CLR_RESET)"; \
-    fi
+	@echo "$(CLR_Y)Remove the secrets and the .env file? (y/n)$(CLR_RESET)"
+	@read -r confirm; \
+	if [ "$$confirm" = "y" ]; then \
+		$(RM) $(SECRETS); \
+		$(RM) srcs/.env; \
+		echo "$(CLR_G)Secrets and .env removed$(CLR_RESET)"; \
+	else \
+		echo "$(CLR_Y)Secrets and .env not removed$(CLR_RESET)"; \
+	fi
 	@echo "$(CLR_G)Full clean done$(CLR_RESET)"
 
 help:
