@@ -107,7 +107,8 @@ services:
     build: ./requirements/bonus/ftp-server/.
     ports:
       - "21:21"
-      - "21100-21110:21100-21110"
+      # One passive port → only one extra NAT rule (e.g. Host 21100 → Guest 21100) besides FTP control.
+      - "21100:21100"
     env_file:
       - .env
     environment:

@@ -13,7 +13,7 @@ WP_GROUP=www-data
 : "${FTP_PORT:=21}"
 : "${FTP_USER:=wpftp}"
 : "${PASV_MIN_PORT:=21100}"
-: "${PASV_MAX_PORT:=21110}"
+: "${PASV_MAX_PORT:=21100}"
 
 FTP_PASV_ADDRESS=$(printf '%s' "${FTP_PASV_ADDRESS:-}" | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
 if [ -z "$FTP_PASV_ADDRESS" ]; then
