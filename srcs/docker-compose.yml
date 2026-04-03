@@ -43,6 +43,7 @@ services:
       - .env
     depends_on:
       - wordpress
+      - adminer
     volumes:
       - wordpress_data:/var/www/html:ro #read-only access
     networks:
@@ -78,9 +79,6 @@ services:
     build: ./requirements/mariadb/.
     env_file:
       - .env
-    # environment:
-    #   MARIA_DATABASE: ${MARIA_DATABASE}
-    #   MARIA_USER: ${MARIA_USER}
     secrets:
       - db_root_password
       - db_password
@@ -107,7 +105,6 @@ services:
     build: ./requirements/bonus/ftp-server/.
     ports:
       - "21:21"
-      # One passive port → only one extra NAT rule (e.g. Host 21100 → Guest 21100) besides FTP control.
       - "21100:21100"
     env_file:
       - .env
@@ -115,12 +112,19 @@ services:
       DOMAIN_NAME: ${DOMAIN_NAME}
       FTP_USER: ${FTP_USER:-wpftp}
       FTP_PORT: ${FTP_PORT:-21}
-    # FTP_PASV_ADDRESS only from env_file — do not set it here with ${...:-} or an empty value
-    # overrides srcs/.env and breaks PASV when DOMAIN_NAME does not resolve in the container.
     secrets:
       - ftp_password
     volumes:
       - wordpress_data:/var/www/html
+    networks:
+      - inception-network
+    restart: always
+
+  adminer:
+    container_name: adminer
+    build: ./requirements/bonus/adminer/.
+    depends_on:
+      - mariadb
     networks:
       - inception-network
     restart: always
