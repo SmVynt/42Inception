@@ -8,6 +8,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY tools/site /site
 WORKDIR /site
 
+RUN npm install
+
 COPY tools/setup_web.sh /setup_web.sh
 RUN chmod +x /setup_web.sh
 

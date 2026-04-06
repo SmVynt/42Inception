@@ -44,6 +44,7 @@ services:
     depends_on:
       - wordpress
       - adminer
+      - web
     volumes:
       - wordpress_data:/var/www/html:ro #read-only access
     networks:
@@ -125,6 +126,15 @@ services:
     build: ./requirements/bonus/adminer/.
     depends_on:
       - mariadb
+    networks:
+      - inception-network
+    restart: always
+
+  web:
+    container_name: web
+    build: ./requirements/bonus/web/.
+    env_file:
+      - .env
     networks:
       - inception-network
     restart: always
