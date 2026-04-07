@@ -25,10 +25,12 @@ COMPOSE			:= docker compose -f $(COMPOSE_FILE) --project-directory srcs
 
 WP_VOLUME		:= $(DATA_DIR)/wordpress
 DB_VOLUME		:= $(DATA_DIR)/mariadb
+PT_VOLUME		:= $(DATA_DIR)/port
 DOMAIN_NAME		:= $(USER_NAME).42.fr
 
 export WP_VOLUME
 export DB_VOLUME
+export PT_VOLUME
 export DOMAIN_NAME
 
 NAME			:= inception
@@ -47,6 +49,10 @@ $(NAME): $(SRC_DIR)
 	@if [ ! -d $(DB_VOLUME) ]; then \
 		echo "$(CLR_Y)Creating DB directory...$(CLR_RESET)"; \
 		mkdir -p $(DB_VOLUME); \
+	fi
+	@if [ ! -d $(PT_VOLUME) ]; then \
+		echo "$(CLR_Y)Creating PT directory...$(CLR_RESET)"; \
+		mkdir -p $(PT_VOLUME); \
 	fi
 	@echo "$(CLR_G)Project is ready to run!$(CLR_RESET)"
 

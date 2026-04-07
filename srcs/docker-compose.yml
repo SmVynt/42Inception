@@ -11,6 +11,13 @@ volumes:
       type: none
       o: bind
       device: ${DB_VOLUME}
+  port_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PT_VOLUME}
+  
 
 networks:
   inception-network:
@@ -45,6 +52,7 @@ services:
       - wordpress
       - adminer
       - web
+      - portainer
     volumes:
       - wordpress_data:/var/www/html:ro #read-only access
     networks:
@@ -135,6 +143,20 @@ services:
     build: ./requirements/bonus/web/.
     env_file:
       - .env
+    networks:
+      - inception-network
+    restart: always
+
+  portainer:
+    container_name: portainer
+    build: ./requirements/bonus/portainer/.
+    ports:
+      - "9443:9443"
+    env_file:
+      - .env
+    volumes:
+      - port_data:/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - inception-network
     restart: always
