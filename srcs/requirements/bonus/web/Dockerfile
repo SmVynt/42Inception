@@ -3,8 +3,12 @@ FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	curl \
 	ca-certificates \
-	&& curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-	&& apt-get install -y --no-install-recommends nodejs \
+	&& rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x -o setup22.sh
+RUN ./setup22.sh && rm setup22.sh
+
+RUN apt-get install -y --no-install-recommends nodejs \
 	&& rm -rf /var/lib/apt/lists/*
 
 COPY tools/site /site
