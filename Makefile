@@ -139,5 +139,6 @@ help:
 	@echo "  make clean        compose down -v + remove host data dirs (images/cache kept)"
 	@echo "  make fclean       full reset + --rmi local + prune build cache; keeps *example files"
 	@echo "  make init-secrets Copy .env.example and secrets/*.example"
+	@echo "  make clean-secrets Clean secrets and .env"
 
-.PHONY: all help $(NAME) init-secrets build up rebuild down logs ps clean fclean
+.PHONY: all help $(NAME) init-secrets clean-secrets build up rebuild down logs ps clean fclean
