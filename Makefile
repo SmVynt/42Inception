@@ -17,17 +17,20 @@ SECRETS 		:= \
 				$(SECRET_DIR)db_root_password.txt \
 				$(SECRET_DIR)wp_password.txt \
 				$(SECRET_DIR)wp_author_password.txt \
-				$(SECRET_DIR)redis_password_bonus.txt
+				$(SECRET_DIR)redis_password_bonus.txt \
+				$(SECRET_DIR)ftp_password_bonus.txt
 
 COMPOSE_FILE	:= srcs/docker-compose.yml
 COMPOSE			:= docker compose -f $(COMPOSE_FILE) --project-directory srcs
 
 WP_VOLUME		:= $(DATA_DIR)/wordpress
 DB_VOLUME		:= $(DATA_DIR)/mariadb
+PT_VOLUME		:= $(DATA_DIR)/port
 DOMAIN_NAME		:= $(USER_NAME).42.fr
 
 export WP_VOLUME
 export DB_VOLUME
+export PT_VOLUME
 export DOMAIN_NAME
 
 NAME			:= inception
@@ -47,7 +50,17 @@ $(NAME): $(SRC_DIR)
 		echo "$(CLR_Y)Creating DB directory...$(CLR_RESET)"; \
 		mkdir -p $(DB_VOLUME); \
 	fi
+	@if [ ! -d $(PT_VOLUME) ]; then \
+		echo "$(CLR_Y)Creating PT directory...$(CLR_RESET)"; \
+		mkdir -p $(PT_VOLUME); \
+	fi
 	@echo "$(CLR_G)Project is ready to run!$(CLR_RESET)"
+
+clean-secrets:
+	@echo "$(CLR_Y)Cleaning secrets...$(CLR_RESET)"
+	@$(RM) $(SECRETS)
+	@$(RM) srcs/.env
+	@echo "$(CLR_G)Secrets cleaned$(CLR_RESET)"
 
 init-secrets:
 	@echo "$(CLR_Y)Initializing secrets if they don't exist...$(CLR_RESET)"
@@ -59,6 +72,7 @@ init-secrets:
 	@[ -f secrets/wp_password.txt ] || cp secrets/wp_password.txt.example secrets/wp_password.txt
 	@[ -f secrets/wp_author_password.txt ] || cp secrets/wp_author_password.txt.example secrets/wp_author_password.txt
 	@[ -f secrets/redis_password_bonus.txt ] || cp secrets/redis_password_bonus.txt.example secrets/redis_password_bonus.txt
+	@[ -f secrets/ftp_password_bonus.txt ] || cp secrets/ftp_password_bonus.txt.example secrets/ftp_password_bonus.txt
 	@echo "$(CLR_G)Secrets initialized$(CLR_RESET)"
 
 build: $(NAME)
@@ -73,6 +87,7 @@ up: $(NAME)
 
 rebuild: $(NAME)
 	@echo "$(CLR_Y)Rebuilding from scratch...$(CLR_RESET)"
+	@$(MAKE) all
 	@$(COMPOSE) build --no-cache
 	@$(COMPOSE) up -d
 	@echo "$(CLR_G)Rebuilt and up: https://$(DOMAIN_NAME)$(CLR_RESET)"
@@ -124,5 +139,6 @@ help:
 	@echo "  make clean        compose down -v + remove host data dirs (images/cache kept)"
 	@echo "  make fclean       full reset + --rmi local + prune build cache; keeps *example files"
 	@echo "  make init-secrets Copy .env.example and secrets/*.example"
+	@echo "  make clean-secrets Clean secrets and .env"
 
-.PHONY: all help $(NAME) init-secrets build up rebuild down logs ps clean fclean
+.PHONY: all help $(NAME) init-secrets clean-secrets build up rebuild down logs ps clean fclean

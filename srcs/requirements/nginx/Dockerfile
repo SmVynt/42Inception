@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	openssl \
 	&& rm -rf /var/lib/apt/lists/*
 
-COPY ./conf/default_with_env /etc/nginx/sites-available/default_with_env
+COPY ./conf/default_with_env.conf /etc/nginx/sites-available/default_with_env
 
 COPY ./tools/setup_nginx.sh /setup_nginx.sh
 

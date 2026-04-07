@@ -11,6 +11,13 @@ volumes:
       type: none
       o: bind
       device: ${DB_VOLUME}
+  port_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PT_VOLUME}
+  
 
 networks:
   inception-network:
@@ -28,6 +35,8 @@ secrets:
     file: ../secrets/wp_author_password.txt
   redis_password:
     file: ../secrets/redis_password_bonus.txt
+  ftp_password:
+    file: ../secrets/ftp_password_bonus.txt
 
 services:
   nginx:
@@ -41,6 +50,9 @@ services:
       - .env
     depends_on:
       - wordpress
+      - adminer
+      - web
+      - portainer
     volumes:
       - wordpress_data:/var/www/html:ro #read-only access
     networks:
@@ -76,9 +88,6 @@ services:
     build: ./requirements/mariadb/.
     env_file:
       - .env
-    environment:
-      MARIA_DATABASE: ${MARIA_DATABASE}
-      MARIA_USER: ${MARIA_USER}
     secrets:
       - db_root_password
       - db_password
@@ -96,6 +105,58 @@ services:
       - .env
     secrets:
       - redis_password
+    networks:
+      - inception-network
+    restart: always
+
+  ftp-server:
+    container_name: ftp-server
+    build: ./requirements/bonus/ftp-server/.
+    ports:
+      - "21:21"
+      - "21100:21100"
+    env_file:
+      - .env
+    environment:
+      DOMAIN_NAME: ${DOMAIN_NAME}
+      FTP_USER: ${FTP_USER:-wpftp}
+      FTP_PORT: ${FTP_PORT:-21}
+    secrets:
+      - ftp_password
+    volumes:
+      - wordpress_data:/var/www/html
+    networks:
+      - inception-network
+    restart: always
+
+  adminer:
+    container_name: adminer
+    build: ./requirements/bonus/adminer/.
+    depends_on:
+      - mariadb
+    networks:
+      - inception-network
+    restart: always
+
+  web:
+    container_name: web
+    build: ./requirements/bonus/web/.
+    env_file:
+      - .env
+    networks:
+      - inception-network
+    restart: always
+
+  portainer:
+    container_name: portainer
+    build: ./requirements/bonus/portainer/.
+    ports:
+      - "9443:9443"
+    env_file:
+      - .env
+    volumes:
+      - port_data:/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - inception-network
     restart: always

@@ -37,11 +37,19 @@ sudo systemctl start ssh
 echo -e "${CLR_G}SSH access setup complete.${CLR_RESET}"
 echo ""
 
+# Setup Firewall access for FTP
+echo -e "${CLR_B}Setting up Firewall access for FTP...${CLR_RESET}"
+sudo ufw allow 21/tcp
+sudo ufw allow 21100/tcp
+echo -e "${CLR_G}Firewall access for FTP setup complete.${CLR_RESET}"
+echo ""
+
 # Show instructions
 echo -e "${CLR_B}What to do next?${CLR_RESET}"
 echo -e "${CLR_Y}Setup the VM access:${CLR_RESET}"
 echo -e "  ${CLR_Y}1.${CLR_RESET} Port forwarding:  Host 3022 → Guest 22 (SSH)"
 echo -e "  ${CLR_Y}2.${CLR_RESET} Port forwarding:  Host 443 → Guest 443 (HTTPS)"
+echo -e "  ${CLR_Y}3.${CLR_RESET} FTP (optional):   Host 2121 → Guest 21, Host 21100 → Guest 21100"
 echo -e "${CLR_Y}Access the VM using your SSH key: ssh -p 3022 ${USER_NAME}@127.0.0.1$ if you want${CLR_RESET}"
 echo -e "${CLR_Y}run ${CLR_B}make init-secrets${CLR_RESET} to initialize the secrets${CLR_RESET}"
 echo -e "${CLR_Y}run ${CLR_B}make up${CLR_RESET} to start the project${CLR_RESET}"
