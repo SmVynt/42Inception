@@ -27,11 +27,13 @@ WP_VOLUME		:= $(DATA_DIR)/wordpress
 DB_VOLUME		:= $(DATA_DIR)/mariadb
 PT_VOLUME		:= $(DATA_DIR)/port
 DOMAIN_NAME		:= $(USER_NAME).42.fr
+VM_IP			:= $(shell hostname -I 2>/dev/null | awk '{print $$1}')
 
 export WP_VOLUME
 export DB_VOLUME
 export PT_VOLUME
 export DOMAIN_NAME
+export VM_IP
 
 NAME			:= inception
 
@@ -83,6 +85,7 @@ build: $(NAME)
 up: $(NAME)
 	@echo "$(CLR_Y)Starting the project...$(CLR_RESET)"
 	@$(COMPOSE) up -d --build
+	@echo "$(CLR_G)VM IP: $(VM_IP)$(CLR_RESET)"
 	@echo "$(CLR_G)WordPress: https://$(DOMAIN_NAME)$(CLR_RESET)"
 	@echo "$(CLR_Y)Adminer: https://adminer.$(DOMAIN_NAME)$(CLR_RESET)"
 	@echo "$(CLR_Y)Web: https://web.$(DOMAIN_NAME)$(CLR_RESET)"
