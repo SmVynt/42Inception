@@ -20,9 +20,13 @@ echo -e "${CLR_B}=== Inception VM Setup for ${USER_NAME} ===${CLR_RESET}"
 # Docker and dependencies
 echo -e "${CLR_B}Checking dependencies...${CLR_RESET}"
 sudo apt-get update -qq
-sudo apt-get install -y -qq docker.io git make curl > /dev/null
-if apt-cache show docker-compose-v2 > /dev/null 2>&1; then
+sudo apt-get install -y -qq docker.io git make curl ufw > /dev/null
+if apt-cache show docker-compose-plugin > /dev/null 2>&1; then
+	sudo apt-get install -y -qq docker-compose-plugin > /dev/null
+elif apt-cache show docker-compose-v2 > /dev/null 2>&1; then
 	sudo apt-get install -y -qq docker-compose-v2 > /dev/null
+elif apt-cache show docker-compose > /dev/null 2>&1; then
+	sudo apt-get install -y -qq docker-compose > /dev/null
 fi
 sudo usermod -aG docker "$USER_NAME"
 echo -e "${CLR_G}Docker installed.${CLR_RESET}"
@@ -39,9 +43,13 @@ echo ""
 
 # Setup Firewall access for FTP
 echo -e "${CLR_B}Setting up Firewall access for FTP...${CLR_RESET}"
-sudo ufw allow 21/tcp
-sudo ufw allow 21100/tcp
-echo -e "${CLR_G}Firewall access for FTP setup complete.${CLR_RESET}"
+if command -v ufw > /dev/null 2>&1; then
+	sudo ufw allow 21/tcp
+	sudo ufw allow 21100/tcp
+	echo -e "${CLR_G}Firewall access for FTP setup complete.${CLR_RESET}"
+else
+	echo -e "${CLR_Y}ufw is not available; skipping firewall rule setup.${CLR_RESET}"
+fi
 echo ""
 
 # Show instructions
