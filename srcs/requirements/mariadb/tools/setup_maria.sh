@@ -116,5 +116,4 @@ elif [ ! -f "$INIT_MARK" ]; then
 fi
 
 echo "${CLR_G}MariaDB is ready, starting...${CLR_RESET}"
-# Force listen on all interfaces — Debian's 50-server.cnf often sets 127.0.0.1 only
-exec mariadbd --user=mysql --datadir="$DATADIR" --bind-address=0.0.0.0
+exec mariadbd --user=mysql --datadir="$DATADIR" --port=${MARIA_PORT:-3306} --bind-address=0.0.0.0
