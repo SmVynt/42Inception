@@ -83,7 +83,10 @@ build: $(NAME)
 up: $(NAME)
 	@echo "$(CLR_Y)Starting the project...$(CLR_RESET)"
 	@$(COMPOSE) up -d --build
-	@echo "$(CLR_G)Up: https://$(DOMAIN_NAME)$(CLR_RESET)"
+	@echo "$(CLR_G)WordPress: https://$(DOMAIN_NAME)$(CLR_RESET)"
+	@echo "$(CLR_Y)Adminer: https://adminer.$(DOMAIN_NAME)$(CLR_RESET)"
+	@echo "$(CLR_Y)Web: https://web.$(DOMAIN_NAME)$(CLR_RESET)"
+	@echo "$(CLR_Y)Portainer: https://portainer.$(DOMAIN_NAME)$(CLR_RESET)"
 
 rebuild: $(NAME)
 	@echo "$(CLR_Y)Rebuilding from scratch...$(CLR_RESET)"
