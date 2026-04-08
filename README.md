@@ -35,15 +35,16 @@ This repository provides:
 
 ### Prerequisites
 
-- A **virtual machine** (Debian recommended) with **Docker** and **Docker Compose v2** (`docker compose`).
-- Your 42 login used for paths and domain: data lives under **`/home/<login>/data/`**, site is **`https://<login>.42.fr`** (configure DNS or `/etc/hosts` on the client).
+- A **virtual machine with GUI** (Debian recommended).
+- `setup_vm.sh` installs Docker and Compose (`docker compose` or `docker-compose`) automatically.
+- Your 42 login is used for paths and domain: data lives under **`/home/<login>/data/`**, site is **`https://<login>.42.fr`**.
 
 ### Quick start
 
 ```bash
 git clone <this repo url> inception
 cd inception
-./setup_vm.sh     # installs all required packages
+./setup_vm.sh     # installs required packages and updates /etc/hosts in the VM
 make              # creates data dirs, copies .env / secrets from examples if missing
 # Edit secrets/*.txt and srcs/.env (non-secret values only in .env)
 make up           # build and start the stack
@@ -53,14 +54,8 @@ make up           # build and start the stack
 
 Open **`https://<login>.42.fr`** in a browser. The TLS certificate is **self-signed**; accept the security warning once.
 
-For bonus subdomains to resolve from your client, add them to your client machine's **`/etc/hosts`** (or Windows `C:\Windows\System32\drivers\etc\hosts`):
-
-```
-<VM_IP>  <login>.42.fr www.<login>.42.fr
-<VM_IP>  adminer.<login>.42.fr
-<VM_IP>  web.<login>.42.fr
-<VM_IP>  portainer.<login>.42.fr
-```
+`setup_vm.sh` automatically adds the required hosts entries inside the VM for:
+`<login>.42.fr`, `www.<login>.42.fr`, `adminer.<login>.42.fr`, `web.<login>.42.fr`, `portainer.<login>.42.fr`.
 
 Stop the project:
 

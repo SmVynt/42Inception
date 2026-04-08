@@ -32,37 +32,27 @@ On a fresh VM, from the repository root, run as your **normal user** (not root):
 ./setup_vm.sh
 ```
 
-This installs `docker.io`, `git`, `make`, `curl`, enables SSH, opens the FTP firewall ports, and prints next-step hints. After it finishes, **log out and back in** (or reboot) so the `docker` group applies to your session.
+This installs `docker.io`, `git`, `make`, `curl`, enables SSH, opens the FTP firewall ports, and automatically updates `/etc/hosts` in the VM for all project domains. After it finishes, **log out and back in** (or reboot) so the `docker` group applies to your session.
 
-### 2. Configure port forwarding in your hypervisor
+### 2. Hosts configuration (automatic)
 
-The VM does not have a public IP — your host machine needs to forward ports to it. In **VirtualBox** (or VMware equivalent):
-
-`VM Settings → Network → Adapter 1 (NAT) → Port Forwarding`
-
-| Name | Protocol | Host IP | Host Port | Guest IP | Guest Port | Purpose |
-|------|----------|---------|-----------|----------|------------|---------|
-| ssh | TCP | 127.0.0.1 | 3022 | | 22 | SSH access to VM |
-| https | TCP | 127.0.0.1 | 443 | | 443 | All web services |
-| ftp | TCP | 127.0.0.1 | 2121 | | 21 | FTP control |
-| ftp-pasv | TCP | 127.0.0.1 | 21100 | | 21100 | FTP passive data |
-
-> FTP rules are only needed if you plan to use the FTP service. SSH is optional but very convenient.
-
-After adding the HTTPS rule, the client machine (your Windows/Linux/macOS host) can reach all web services at `127.0.0.1` — use that as `<VM_IP>` in the hosts file.
-
-### 3. (Optional) SSH into the VM from your host
-
-```bash
-ssh -p 3022 <your_vm_username>@127.0.0.1
-```
-
-### 4. Set FTP passive address
-
-Because the VM is behind NAT, vsftpd needs to know the address it should advertise to FTP clients. Set `FTP_PASV_ADDRESS` in `srcs/.env` to `127.0.0.1` (since you're forwarding through localhost):
+`setup_vm.sh` auto-generates `/etc/hosts` entries in the VM using the VM IP and your login:
 
 ```
-FTP_PASV_ADDRESS=127.0.0.1
+<VM_IP>  <login>.42.fr www.<login>.42.fr
+<VM_IP>  adminer.<login>.42.fr
+<VM_IP>  web.<login>.42.fr
+<VM_IP>  portainer.<login>.42.fr
+```
+
+The entries are refreshed on each run of `setup_vm.sh` (no duplicate auto-lines).
+
+### 3. Set FTP passive address
+
+Set `FTP_PASV_ADDRESS` in `srcs/.env` to the VM IP (the same IP used in `/etc/hosts`):
+
+```
+FTP_PASV_ADDRESS=<VM_IP>
 ```
 
 ---
@@ -90,31 +80,19 @@ make down    # stop containers (data on volumes is kept)
 
 All services are reached through the same VM IP on **port 443**. NGINX routes traffic based on the subdomain.
 
-First, find the VM IP from the VM terminal:
+`setup_vm.sh` already writes these entries to `/etc/hosts` in the VM automatically.
+If needed, find the VM IP manually:
 ```bash
 hostname -I | awk '{print $1}'
 ```
 
-Then add these entries to your **client machine's** hosts file (not the VM), replacing `<VM_IP>` and `<login>`:
+Expected entries:
 
 ```
 <VM_IP>  <login>.42.fr www.<login>.42.fr
 <VM_IP>  adminer.<login>.42.fr
 <VM_IP>  web.<login>.42.fr
 <VM_IP>  portainer.<login>.42.fr
-```
-
-### You can do it like that on Linux
-
-```bash
-VM_IP=<VM_IP>
-LOGIN=<login>
-sudo tee -a /etc/hosts <<EOF
-$VM_IP  $LOGIN.42.fr www.$LOGIN.42.fr
-$VM_IP  adminer.$LOGIN.42.fr
-$VM_IP  web.$LOGIN.42.fr
-$VM_IP  portainer.$LOGIN.42.fr
-EOF
 ```
 
 **Browser warning:** The certificate is **self-signed**. Accept the warning once per subdomain.

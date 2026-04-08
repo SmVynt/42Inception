@@ -52,15 +52,25 @@ else
 fi
 echo ""
 
-# Show instructions
-echo -e "${CLR_B}What to do next?${CLR_RESET}"
-echo -e "${CLR_Y}Setup the VM access:${CLR_RESET}"
-echo -e "  ${CLR_Y}1.${CLR_RESET} Port forwarding:  Host 3022 → Guest 22 (SSH)"
-echo -e "  ${CLR_Y}2.${CLR_RESET} Port forwarding:  Host 443 → Guest 443 (HTTPS)"
-echo -e "  ${CLR_Y}3.${CLR_RESET} FTP (optional):   Host 2121 → Guest 21, Host 21100 → Guest 21100"
-echo -e "${CLR_Y}Access the VM using your SSH key: ssh -p 3022 ${USER_NAME}@127.0.0.1$ if you want${CLR_RESET}"
-echo -e "${CLR_Y}run ${CLR_B}make init-secrets${CLR_RESET} to initialize the secrets${CLR_RESET}"
-echo -e "${CLR_Y}run ${CLR_B}make up${CLR_RESET} to start the project${CLR_RESET}"
+# Setup /etc/hosts for local GUI browser access from inside VM
+echo -e "${CLR_B}Setting up /etc/hosts entries...${CLR_RESET}"
+VM_IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
+if [ -n "${VM_IP}" ]; then
+	HOSTS_TMP="$(mktemp)"
+	awk '!/# inception-auto-hosts$/' /etc/hosts > "${HOSTS_TMP}"
+	{
+		echo "${VM_IP} ${DOMAIN_NAME} www.${DOMAIN_NAME} # inception-auto-hosts"
+		echo "${VM_IP} adminer.${DOMAIN_NAME} # inception-auto-hosts"
+		echo "${VM_IP} web.${DOMAIN_NAME} # inception-auto-hosts"
+		echo "${VM_IP} portainer.${DOMAIN_NAME} # inception-auto-hosts"
+	} >> "${HOSTS_TMP}"
+	sudo cp "${HOSTS_TMP}" /etc/hosts
+	rm -f "${HOSTS_TMP}"
+	echo -e "${CLR_G}/etc/hosts updated for ${DOMAIN_NAME} subdomains (IP: ${VM_IP}).${CLR_RESET}"
+else
+	echo -e "${CLR_Y}Could not detect VM IP; skipping /etc/hosts update.${CLR_RESET}"
+fi
+echo ""
 
 
 # Show how to run the project
